@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Northstar Homes — AI Sales Agent Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0b0f19;
+      --bg-secondary: #161e2e;
+      --bg-card: rgba(30, 41, 59, 0.7);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --accent-color: #6366f1;
+      --accent-hover: #4f46e5;
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --danger-color: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 1200px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      padding: 24px 32px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .header-info h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(to right, #818cf8, #c084fc);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+    }
+
+    .header-info p {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .status-badge {
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #a5b4fc;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .status-badge::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background-color: var(--accent-color);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-color);
+    }
+
+    .status-badge.thinking::before {
+      background-color: var(--warning-color);
+      box-shadow: 0 0 8px var(--warning-color);
+      animation: pulse 1s infinite alternate;
+    }
+
+    .status-badge.ended::before {
+      background-color: var(--danger-color);
+      box-shadow: 0 0 8px var(--danger-color);
+    }
+
+    @keyframes pulse {
+      0% {
+        opacity: 0.3;
+      }
+
+      100% {
+        opacity: 1;
+      }
+    }
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      min-height: 600px;
+    }
+
+    @media (max-width: 900px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+      }
+
+      body {
+        padding: 10px;
+      }
+    }
+
+    /* Left Side: Chat Section */
+    .chat-section {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border-color);
+      background: rgba(15, 23, 42, 0.3);
+    }
+
+    .chat-history {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      max-height: 520px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scroll-behavior: smooth;
+    }
+
+    .msg-wrapper {
+      display: flex;
+      width: 100%;
+      margin: 4px 0;
+    }
+
+    .msg-wrapper.user {
+      justify-content: flex-end;
+    }
+
+    .msg-bubble {
+      max-width: 80%;
+      padding: 14px 18px;
+      border-radius: 18px;
+      line-height: 1.5;
+      font-size: 15px;
+      white-space: pre-wrap;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .bot .msg-bubble {
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-top-left-radius: 4px;
+      color: #e2e8f0;
+    }
+
+    .user .msg-bubble {
+      background: linear-gradient(135deg, var(--accent-color) 0%, #4338ca 100%);
+      color: white;
+      border-top-right-radius: 4px;
+    }
+
+    .chat-controls {
+      padding: 20px 24px;
+      border-top: 1px solid var(--border-color);
+      background: rgba(15, 23, 42, 0.6);
+    }
+
+    .input-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    .chat-input {
+      flex: 1;
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 14px 18px;
+      color: var(--text-primary);
+      font-size: 15px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .chat-input:focus {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    .chat-input:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 14px;
+      padding: 0 24px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--accent-color);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #334155;
+      color: #f1f5f9;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #475569;
+    }
+
+    .btn-secondary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .chat-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    /* Right Side: Dashboard Section */
+    .dashboard-section {
+      padding: 28px;
+      background: rgba(30, 41, 59, 0.2);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .dashboard-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .dash-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.3s ease;
+    }
+
+    .dash-card:hover {
+      border-color: rgba(99, 102, 241, 0.3);
+      background: rgba(30, 41, 59, 0.8);
+    }
+
+    .card-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .card-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-align: right;
+    }
+
+    .badge-val {
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge-neutral {
+      background: rgba(148, 163, 184, 0.15);
+      color: #cbd5e1;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .badge-success {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-warning {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .analytics-box {
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 16px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 13px;
+      color: #38bdf8;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      max-height: 250px;
+      display: none;
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .demo-hint {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      background: rgba(30, 41, 59, 0.3);
+      padding: 12px 16px;
+      border-radius: 12px;
+      border-left: 3px solid var(--accent-color);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-info">
+        <h1>Northstar Homes — Sales Assistant</h1>
+        <p>Project Northstar One · Sector 79, Gurugram</p>
+      </div>
+      <div id="status" class="status-badge">Ready</div>
+    </div>
+
+    <!-- Main Body -->
+    <div class="main-layout">
+      <!-- Left Section: Chat -->
+      <div class="chat-section">
+        <div id="chat-history" class="chat-history">
+          <div class="msg-wrapper bot">
+            <div class="msg-bubble">Hi! I’m Northstar from Northstar Homes. Are you exploring a 2 BHK or 3 BHK, or just
+              looking around?</div>
+          </div>
+        </div>
+        <div class="chat-controls">
+          <div class="input-group">
+            <input id="chat-input" class="chat-input" placeholder="Type in English, Hindi or Hinglish…"
+              autocomplete="off" />
+            <button id="sendBtn" class="btn btn-primary" onclick="send()">Send</button>
+          </div>
+          <div class="chat-actions">
+            <button id="endBtn" class="btn btn-secondary" onclick="endChat()">End & Get Analytics</button>
+            <button class="btn btn-secondary" onclick="sendPreset('I want to book a site visit', 'confirmed')">Simulate
+              Success Booking</button>
+            <button class="btn btn-secondary" onclick="sendPreset('I want to book a site visit', 'failed')">Simulate
+              Failed Booking</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Section: Dashboard -->
+      <div class="dashboard-section">
+        <h2 class="dashboard-title">
+          <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24">
+            <path
+              d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3M19 19H5V5H19V19M7 10H9V17H7V10M11 7H13V17H11V7M15 13H17V17H15V13Z" />
+          </svg>
+          Lead Qualification Profile
+        </h2>
+
+        <div class="dashboard-grid">
+          <div class="dash-card">
+            <span class="card-label">Preferred Config</span>
+            <span id="dash-config" class="card-value">-</span>
+          </div>
+          <div class="dash-card">
+            <span class="card-label">Budget Range</span>
+            <span id="dash-budget" class="card-value">-</span>
+          </div>
+          <div class="dash-card">
+            <span class="card-label">Purpose</span>
+            <span id="dash-purpose" class="card-value">-</span>
+          </div>
+          <div class="dash-card">
+            <span class="card-label">Timeline</span>
+            <span id="dash-timeline" class="card-value">-</span>
+          </div>
+          <div class="dash-card">
+            <span class="card-label">Interest Level</span>
+            <span id="dash-interest" class="badge-val badge-neutral">unknown</span>
+          </div>
+          <div class="dash-card">
+            <span class="card-label">Site-Visit Status</span>
+            <span id="dash-booking" class="badge-val badge-neutral">not_requested</span>
+          </div>
+          <div class="dash-card">
+            <span class="card-label">Follow-up Required</span>
+            <span id="dash-followup" class="card-value">No</span>
+          </div>
+          <div class="dash-card">
+            <span class="card-label">Human Escalation</span>
+            <span id="dash-handoff" class="badge-val badge-neutral">No</span>
+          </div>
+        </div>
+
+        <div class="demo-hint">
+          <strong>Simulation Controls:</strong> Questions about site visits do not book automatically. Use the
+          "Simulate" buttons to control backend outcomes, as customer text does not determine booking success or
+          failure.
+        </div>
+
+        <pre id="analytics" class="analytics-box"></pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let sessionId = null;
+    let ended = false;
+    const chatHistory = document.getElementById('chat-history');
+    const chatInput = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('sendBtn');
+    const endBtn = document.getElementById('endBtn');
+    const statusBadge = document.getElementById('status');
+
+    chatInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') send();
+    });
+
+    function addMessage(text, role) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'msg-wrapper ' + role;
+      const bubble = document.createElement('div');
+      bubble.className = 'msg-bubble';
+      bubble.textContent = text;
+      wrapper.appendChild(bubble);
+      chatHistory.appendChild(wrapper);
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    function setEnded(value) {
+      ended = value;
+      chatInput.disabled = value;
+      sendBtn.disabled = value;
+      endBtn.disabled = value;
+      if (value) {
+        statusBadge.textContent = 'Ended';
+        statusBadge.className = 'status-badge ended';
+      }
+    }
+
+    function updateDashboard(profile) {
+      if (!profile) return;
+
+      document.getElementById('dash-config').textContent = profile.configuration || '-';
+      document.getElementById('dash-budget').textContent = profile.budget || '-';
+      document.getElementById('dash-purpose').textContent = profile.purpose || '-';
+      document.getElementById('dash-timeline').textContent = profile.timeline || '-';
+
+      // Update Interest Badge
+      const interest = profile.interest_level || 'unknown';
+      const intBadge = document.getElementById('dash-interest');
+      intBadge.textContent = interest;
+      intBadge.className = 'badge-val ' + (
+        interest === 'high' ? 'badge-success' :
+          interest === 'medium' ? 'badge-warning' :
+            interest === 'low' ? 'badge-danger' : 'badge-neutral'
+      );
+
+      // Update Booking Badge
+      const booking = profile.site_visit_status || 'not_requested';
+      const bookBadge = document.getElementById('dash-booking');
+      bookBadge.textContent = booking;
+      bookBadge.className = 'badge-val ' + (
+        booking === 'confirmed' ? 'badge-success' :
+          booking === 'failed' ? 'badge-danger' : 'badge-neutral'
+      );
+
+      // Update Followup
+      const followupReq = profile.follow_up_required;
+      const followupTime = profile.follow_up_time;
+      document.getElementById('dash-followup').textContent = followupReq
+        ? (followupTime ? `Yes (${followupTime})` : 'Yes')
+        : 'No';
+
+      // Update Handoff Badge
+      const handoff = profile.handoff_requested;
+      const handoffBadge = document.getElementById('dash-handoff');
+      if (handoff) {
+        handoffBadge.textContent = 'Yes';
+        handoffBadge.className = 'badge-val badge-warning';
+      } else {
+        handoffBadge.textContent = 'No';
+        handoffBadge.className = 'badge-val badge-neutral';
+      }
+    }
+
+    async function send(bookingResult = null) {
+      const text = chatInput.value.trim();
+      if (!text || ended) return;
+
+      chatInput.value = '';
+      addMessage(text, 'user');
+      sendBtn.disabled = true;
+      statusBadge.textContent = 'Thinking…';
+      statusBadge.className = 'status-badge thinking';
+
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            session_id: sessionId,
+            message: text,
+            demo_booking_result: bookingResult
+          })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          addMessage(data.detail || 'Something went wrong.', 'bot');
+          statusBadge.textContent = 'Ready';
+          statusBadge.className = 'status-badge';
+          return;
+        }
+
+        sessionId = data.session_id;
+        addMessage(data.reply, 'bot');
+
+        if (data.lead_profile) {
+          updateDashboard(data.lead_profile);
+        }
+
+        if (data.ended) {
+          setEnded(true);
+        } else {
+          statusBadge.textContent = 'Ready';
+          statusBadge.className = 'status-badge';
+        }
+      } catch (error) {
+        addMessage('Unable to reach the backend. Please check that FastAPI is running.', 'bot');
+        statusBadge.textContent = 'Error';
+        statusBadge.className = 'status-badge ended';
+      } finally {
+        if (!ended) sendBtn.disabled = false;
+      }
+    }
+
+    function sendPreset(text, bookingResult = null) {
+      if (ended) return;
+      chatInput.value = text;
+      send(bookingResult);
+    }
+
+    async function endChat() {
+      if (!sessionId) {
+        addMessage('Start a conversation before generating analytics.', 'bot');
+        return;
+      }
+      try {
+        const response = await fetch('/api/end', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: sessionId })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          addMessage(data.detail || 'Unable to end conversation.', 'bot');
+          return;
+        }
+
+        const analyticsBox = document.getElementById('analytics');
+        analyticsBox.style.display = 'block';
+        analyticsBox.textContent = JSON.stringify(data.analytics, null, 2);
+
+        updateDashboard(data.analytics);
+        setEnded(true);
+      } catch (error) {
+        addMessage('Unable to reach the backend.', 'bot');
+      }
+    }
+  </script>
+</body>
+
+</html>
